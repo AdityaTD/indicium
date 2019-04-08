@@ -12,9 +12,10 @@ class Indicium {
         if (!util.isObject(options)) throw new TypeError("The Client options must be an object.");
         options = util.mergeDefault(DEFAULTS.CLIENT, options);
 
+        this.databaseName = options.database;
         this.production = options.production;
 
-        this.dbDirectory = path.resolve(path.dirname(require.main.filename), "indicium", options.database);
+        this.dbDirectory = path.resolve(path.dirname(require.main.filename), "indicium", this.databaseName);
         this.tables = new Map();
 
         this.ready = false;
@@ -30,7 +31,7 @@ class Indicium {
     createTable(table) {
         if (!this.ready) throw "[CLIENT] IndiciumClient has not been initialized.";
         if (this.hasTable(table)) throw "[TABLE] This table name already exists in the database.";
-        this.tables.set(table, new Table({ tableName: table }));
+        this.tables.set(table, new Table({ database: this.databaseName, tableName: table }));
         return fs.mkdir(path.resolve(this.dbDirectory, table));
     }
 
@@ -65,7 +66,7 @@ class Indicium {
         const tables = await fs.readDir(this.dbDirectory).filter(file => fs.stat(`${this.dbDirectory}/${file}`).isDirectory());
         if (!tables) console.log("[TABLE] 0 Tables loaded.");
         for (const table of tables) {
-            const newTable = new Table({ tableName: table });
+            const newTable = new Table({ database: this.databaseName, tableName: table });
             this.tables.set(table, newTable);
         }
         console.log(`[TABLE] ${this.tables.size} Tables loaded.`);
