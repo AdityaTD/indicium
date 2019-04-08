@@ -90,7 +90,7 @@ module.exports = {
       "no-mixed-requires": "error",
       "no-new-require": "error",
       "no-path-concat": "error",
-      "no-process-env": "error",
+      "no-process-env": "off",
       "array-bracket-spacing": "error",
       "block-spacing": "error",
       "brace-style": [

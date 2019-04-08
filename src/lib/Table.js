@@ -1,6 +1,6 @@
 const fs = require("fs-nextra");
 const path = require("path");
-const util = require("../../util/util");
+const util = require("../util/util");
 
 class Table {
 

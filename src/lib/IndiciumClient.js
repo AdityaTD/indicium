@@ -1,79 +1,73 @@
 const fs = require("fs-nextra");
 const path = require("path");
-const util = require("./util/util");
 
-const { DEFAULTS } = require("../util/constants");
-
-const Table = require("./structures/Table");
+const Database = require("./Database");
 
 class Indicium {
 
     constructor(options = {}) {
-        if (!util.isObject(options)) throw new TypeError("The Client options must be an object.");
-        options = util.mergeDefault(DEFAULTS.CLIENT, options);
+        this.path = options.path || path.resolve(process.cwd(), "bwd", options.directory || "data");
 
-        this.databaseName = options.database;
-        this.production = options.production;
+        this.production = options.production || process.env.NODE_ENV === "production";
 
-        this.dbDirectory = path.resolve(path.dirname(require.main.filename), "indicium", this.databaseName);
-        this.tables = new Map();
+        this.databases = new Map();
 
         this.ready = false;
         this.init();
     }
 
     /**
-	 * Creates a new table in the database
+	 * Creates a new database
      * @since 0.0.1
-	 * @param {string} table The name for the new table
+	 * @param {string} database The name for the new database
 	 * @returns {void}
 	 */
-    createTable(table) {
-        if (!this.ready) throw "[CLIENT] IndiciumClient has not been initialized.";
-        if (this.hasTable(table)) throw "[TABLE] This table name already exists in the database.";
-        this.tables.set(table, new Table({ database: this.databaseName, tableName: table }));
-        return fs.mkdir(path.resolve(this.dbDirectory, table));
+    createDatabase(database) {
+        if (!this.ready) throw "[CLIENT] IndiciumClient is not ready yet.";
+        if (this.hasDatabase(database)) throw "[DATABASE] This database name already exists.";
+        this.tables.set(database, new Database({ database: database }));
+        return fs.mkdir(path.resolve(this.path, database));
     }
 
     /**
-	 * Deletes the table from the database
+	 * Deletes the database
      * @since 0.0.1
-	 * @param {string} table The table name to delete
+	 * @param {string} database The table name to delete
 	 * @returns {void}
 	 */
-    deleteTable(table) {
-        return this.hasTable(table)
-            .then(exists => exists ? fs.emptyDir(path.resolve(this.dbDirectory, table)).then(() => fs.remove(path.resolve(this.dbDirectory, table)) && this.tables.delete(table)) : null);
+    deleteDatabase(database) {
+        return this.hasDatabase(database)
+            .then(exists => exists ? fs.emptyDir(path.resolve(this.path, database)).then(() => fs.remove(path.resolve(this.path, database)) && this.databases.delete(database)) : null);
     }
 
     /**
-	 * Check if a table exists in the database
+	 * Check if a database exists
      * @since 0.0.1
-	 * @param {string} table The name for the table
+	 * @param {string} database The name for the table
 	 * @returns {Promise<void>}
 	 */
-    hasTable(table) {
-        return this.tables.has(table);
+    hasDatabase(database) {
+        return this.databases.has(database);
     }
 
     /**
-     * Loads all the tables into the database
+     * Loads all the databases to client
      * @since 0.0.1
      * @returns {Promise<string>}
      * @protected
      */
-    async loadTables() {
-        const tables = await fs.readDir(this.dbDirectory).filter(file => fs.stat(`${this.dbDirectory}/${file}`).isDirectory());
-        if (!tables) console.log("[TABLE] 0 Tables loaded.");
-        for (const table of tables) {
-            const newTable = new Table({ database: this.databaseName, tableName: table });
-            this.tables.set(table, newTable);
+    async loadDatabases() {
+        const databases = await fs.readDir(this.path).filter(folder => fs.stat(`${this.path}/${folder}`).isDirectory());
+        if (!databases) console.log("[DATABASE] 0 Databases loaded.");
+        for (const database of databases) {
+            const newDatabase = new Database({ database: database });
+            this.tables.set(database, newDatabase);
         }
-        console.log(`[TABLE] ${this.tables.size} Tables loaded.`);
+        console.log(`[DATABASE] ${this.databases.size} Databases loaded.`);
     }
 
     async init() {
-        await this.loadTables();
+        await this.loadDatabases();
         this.ready = true;
     }
 
