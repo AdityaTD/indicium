@@ -25,7 +25,7 @@ class Database {
 	 * @returns {void}
 	 */
     createTable(table) {
-        if (!this.ready) throw "[CLIENT] IndiciumClient has not been initialized.";
+        if (!this.ready) throw `[DATABASE] ${this.name} database is not yet ready`;
         if (this.hasTable(table)) throw "[TABLE] This table name already exists in the database.";
         this.tables.set(table, new Table({ database: this.name, tableName: table }));
         return fs.mkdir(path.resolve(this.dir, table));
@@ -38,6 +38,7 @@ class Database {
 	 * @returns {void}
 	 */
     deleteTable(table) {
+        if (!this.ready) throw `[DATABASE] ${this.name} database is not yet ready`;
         return this.hasTable(table)
             .then(exists => exists ? fs.emptyDir(path.resolve(this.dir, table)).then(() => fs.remove(path.resolve(this.dir, table)) && this.tables.delete(table)) : null);
     }
@@ -49,6 +50,7 @@ class Database {
 	 * @returns {Promise<void>}
 	 */
     hasTable(table) {
+        if (!this.ready) throw `[DATABASE] ${this.name} database is not yet ready`;
         return this.tables.has(table);
     }
 

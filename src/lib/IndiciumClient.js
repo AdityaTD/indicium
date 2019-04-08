@@ -39,6 +39,7 @@ class Indicium {
 	 * @returns {void}
 	 */
     deleteDatabase(database) {
+        if (!this.ready) throw "[CLIENT] IndiciumClient is not ready yet.";
         return this.hasDatabase(database)
             .then(exists => exists ? fs.emptyDir(path.resolve(this.path, database)).then(() => fs.remove(path.resolve(this.path, database)) && this.databases.delete(database)) : null);
     }
@@ -50,6 +51,7 @@ class Indicium {
 	 * @returns {Promise<void>}
 	 */
     hasDatabase(database) {
+        if (!this.ready) throw "[CLIENT] IndiciumClient is not ready yet.";
         return this.databases.has(database);
     }
 
