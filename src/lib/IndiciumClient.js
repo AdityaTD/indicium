@@ -1,11 +1,14 @@
 const fs = require("fs-nextra");
 const path = require("path");
+const util = require("../util/util");
 
 const Database = require("./Database");
 
 class Indicium {
 
     constructor(options = {}) {
+        if (!util.isObject(options)) throw new TypeError("The Client options must be an object.");
+
         this.path = options.path || path.resolve(process.cwd(), "bwd", options.directory || "data");
 
         this.production = options.production || process.env.NODE_ENV === "production";
@@ -25,7 +28,7 @@ class Indicium {
     createDatabase(database) {
         if (!this.ready) throw "[CLIENT] IndiciumClient is not ready yet.";
         if (this.hasDatabase(database)) throw "[DATABASE] This database name already exists.";
-        this.tables.set(database, new Database({ database: database }));
+        this.tables.set(database, new Database({ database: database, path: this.path }));
         return fs.mkdir(path.resolve(this.path, database));
     }
 
@@ -60,7 +63,7 @@ class Indicium {
         const databases = await fs.readDir(this.path).filter(folder => fs.stat(`${this.path}/${folder}`).isDirectory());
         if (!databases) console.log("[DATABASE] 0 Databases loaded.");
         for (const database of databases) {
-            const newDatabase = new Database({ database: database });
+            const newDatabase = new Database({ database: database, path: this.path });
             this.tables.set(database, newDatabase);
         }
         console.log(`[DATABASE] ${this.databases.size} Databases loaded.`);

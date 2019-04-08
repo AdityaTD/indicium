@@ -1,15 +1,18 @@
 const fs = require("fs-nextra");
 const path = require("path");
+const util = require("../util/util");
 
 const Table = require("./Table");
 
 class Database {
 
     constructor(options = {}) {
-        this.databaseName = options.database || "indicium";
+        if (!util.isObject(options)) throw new TypeError("The Table options must be an object.");
 
-        this.path = options.path || process.cwd();
-        this.dir = path.resolve(this.path, "bwd", "data", this.databaseName);
+        this.name = options.database || "indicium";
+
+        this.path = options.path;
+        this.dir = path.resolve(this.path, this.name);
 
         this.ready = false;
         this.init();
@@ -24,7 +27,7 @@ class Database {
     createTable(table) {
         if (!this.ready) throw "[CLIENT] IndiciumClient has not been initialized.";
         if (this.hasTable(table)) throw "[TABLE] This table name already exists in the database.";
-        this.tables.set(table, new Table({ database: this.databaseName, tableName: table }));
+        this.tables.set(table, new Table({ database: this.name, tableName: table }));
         return fs.mkdir(path.resolve(this.dir, table));
     }
 

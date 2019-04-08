@@ -7,10 +7,11 @@ class Table {
     constructor(options = {}) {
         if (!util.isObject(options)) throw new TypeError("The Table options must be an object.");
 
+        this.path = options.path;
         this.database = options.database;
-        this.tableName = options.tableName;
+        this.name = options.tableName;
 
-        this.tableDirectory = path.resolve(path.dirname(require.main.filename), "indicium", this.database, this.tableName);
+        this.dir = path.resolve(this.path, this.database, this.name);
 
         this.cache = new Map();
 
@@ -24,7 +25,7 @@ class Table {
      * @returns {Array<key, value>}
      */
     entries() {
-        if (!this.ready) throw `[TABLE] ${this.tableName} table is not yet ready`;
+        if (!this.ready) throw `[TABLE] ${this.name} table is not yet ready`;
         if (this.cache.size) return this.cache.entries;
     }
 
@@ -35,9 +36,9 @@ class Table {
 	 * @returns {Promise<boolean>}
 	 */
     has(key) {
-        if (!this.ready) throw `[TABLE] ${this.tableName} table is not yet ready`;
+        if (!this.ready) throw `[TABLE] ${this.name} table is not yet ready`;
         if (this.cache.has(key)) return true;
-        return fs.pathExists(path.resolve(this.tableDirectory, `${key}.json`));
+        return fs.pathExists(path.resolve(this.dir, `${key}.json`));
     }
 
     /**
@@ -47,10 +48,10 @@ class Table {
 	 * @returns {Promise<?Object>}
 	 */
     async get(key) {
-        if (!this.ready) throw `[TABLE] ${this.tableName} table is not yet ready`;
+        if (!this.ready) throw `[TABLE] ${this.name} table is not yet ready`;
         if (this.cache.has(key)) return this.cache.get(key);
-        if (!fs.pathExists(path.resolve(this.tableDirectory, `${key}.json`))) throw `[TABLE] ${this.tableName} table does not have '${key}' record.`;
-        const data = await fs.readJSON(path.resolve(this.tableDirectory, `${key}.json`));
+        if (!fs.pathExists(path.resolve(this.dir, `${key}.json`))) throw `[TABLE] ${this.name} table does not have '${key}' record.`;
+        const data = await fs.readJSON(path.resolve(this.dir, `${key}.json`));
         if (data) {
             this.cache.set(key, data);
             return data;
@@ -68,7 +69,7 @@ class Table {
     async update(key, data) {
         const existent = await this.get(key);
         const updated = util.mergeObjects(existent, this.parseUpdateInput(data));
-        fs.outputJSONAtomic(fs.resolve(this.tableDirectory, `${key}.json`), updated);
+        fs.outputJSONAtomic(fs.resolve(this.dir, `${key}.json`), updated);
         return this.cache.set(key, updated);
     }
 
@@ -93,16 +94,16 @@ class Table {
      * @protected
 	 */
     async loadCache() {
-        if (this.ready) throw `[TABLE] ${this.tableName} table is already ready`;
-        if (!fs.pathExists(this.tableDirectory)) throw `[TABLE] ${this.tableName} table doesn't exist.`;
-        const files = await fs.readdir(this.tableDirectory);
+        if (this.ready) throw `[TABLE] ${this.name} table is already ready`;
+        if (!fs.pathExists(this.dir)) throw `[TABLE] ${this.name} table doesn't exist.`;
+        const files = await fs.readdir(this.dir);
         for (const file of files) {
             if (!file.endsWith(".json")) continue;
-            const json = await fs.readJSON(path.resolve(this.tableDirectory, file)).catch(() => null);
+            const json = await fs.readJSON(path.resolve(this.dir, file)).catch(() => null);
             if (!json) continue;
             this.cache.set(file.slice(0, file.length - 5), json);
         }
-        return console.log(`[TABLE] ${this.tableName} table loaded with ${this.cache.size} records.`);
+        return console.log(`[TABLE] ${this.name} table loaded with ${this.cache.size} records.`);
     }
 
     async init() {
