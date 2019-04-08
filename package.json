@@ -1,0 +1,32 @@
+{
+  "name": "indicium",
+  "version": "0.0.1",
+  "description": "A light weight and powerful JSON based database made in NodeJS",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "eslint src"
+  },
+  "keywords": [
+    "settings",
+    "database"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AdityaTD/indicium.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AdityaTD/indicium/issues"
+  },
+  "homepage": "https://github.com/AdityaTD/indicium#readme",
+  "private": false,
+  "author": "Aditya N. Tripathi <contact@adityatd.me>",
+  "license": "MIT",
+  "dependencies": {
+    "fs-nextra": "^0.4.5"
+  },
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-plugin-node": "^8.0.1",
+    "eslint-plugin-promise": "^4.1.1"
+  }
+}
