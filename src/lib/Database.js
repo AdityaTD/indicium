@@ -14,6 +14,8 @@ class Database {
         this.path = options.path;
         this.dir = path.resolve(this.path, this.name);
 
+        this.tables = new Map();
+
         this.ready = false;
         this.init();
     }
@@ -61,9 +63,11 @@ class Database {
      * @protected
      */
     async loadTables() {
-        const tables = await fs.readDir(this.dir).filter(file => fs.stat(`${this.dir}/${file}`).isDirectory());
-        if (!tables) console.log("[TABLE] 0 Tables loaded.");
-        for (const table of tables) {
+        if (!await fs.pathExists(this.dir)) await fs.mkdir(path.resolve(this.dir));
+        const tables = await fs.readdir(this.dir);
+        const filtered = tables.filter(file => fs.stat(`${this.dir}/${file}`).isDirectory());
+        if (!tables.length) console.log("[TABLE] 0 Tables loaded.");
+        for (const table of filtered) {
             const newTable = new Table({ database: this.databaseName, tableName: table });
             this.tables.set(table, newTable);
         }
