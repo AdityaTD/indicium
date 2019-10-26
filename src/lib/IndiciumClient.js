@@ -10,7 +10,6 @@ class Indicium {
         if (!util.isObject(options)) throw new TypeError("The Client options must be an object.");
 
         this.path = options.path || path.resolve(process.cwd(), "bwd", options.directory || "data");
-
         this.production = options.production || process.env.NODE_ENV === "production";
 
         this.databases = new Map();
@@ -26,9 +25,9 @@ class Indicium {
 	 * @returns {void}
 	 */
     createDatabase(database) {
-        if (!this.ready) throw "[CLIENT] IndiciumClient is not ready yet.";
-        if (this.hasDatabase(database)) throw "[DATABASE] This database name already exists.";
-        this.tables.set(database, new Database({ database: database, path: this.path }));
+        if (!this.ready) return console.log("[CLIENT] IndiciumClient is not ready yet.");
+        if (this.hasDatabase(database)) return console.log("[DATABASE] This database name already exists.");
+        this.databases.set(database, new Database({ database: database, path: this.path }));
         return fs.mkdir(path.resolve(this.path, database));
     }
 
@@ -39,7 +38,7 @@ class Indicium {
 	 * @returns {void}
 	 */
     deleteDatabase(database) {
-        if (!this.ready) throw "[CLIENT] IndiciumClient is not ready yet.";
+        if (!this.ready) return console.log("[CLIENT] IndiciumClient is not ready yet.");
         return this.hasDatabase(database)
             .then(exists => exists ? fs.emptyDir(path.resolve(this.path, database)).then(() => fs.remove(path.resolve(this.path, database)) && this.databases.delete(database)) : null);
     }
@@ -62,18 +61,26 @@ class Indicium {
      * @protected
      */
     async loadDatabases() {
-        const databases = await fs.readDir(this.path).filter(folder => fs.stat(`${this.path}/${folder}`).isDirectory());
-        if (!databases) console.log("[DATABASE] 0 Databases loaded.");
-        for (const database of databases) {
+        if (!await fs.pathExists(this.path)) await fs.mkdir(path.resolve(this.path));
+
+        const databases = await fs.readdir(this.path);
+        const filtered = databases.filter(async folder => {
+            const f = await fs.stat(`${this.path}/${folder}`);
+            return f.isDirectory();
+        });
+
+        if (!filtered.length) console.log("[DATABASE] 0 Databases loaded.");
+        for (const database of filtered) {
             const newDatabase = new Database({ database: database, path: this.path });
-            this.tables.set(database, newDatabase);
+            this.databases.set(database, newDatabase);
         }
-        console.log(`[DATABASE] ${this.databases.size} Databases loaded.`);
+        console.log(`[DATABASE] ${this.databases.length} Databases loaded.`);
     }
 
     async init() {
         await this.loadDatabases();
         this.ready = true;
+        if (!this.databases.size) await this.createDatabase("indicium");
     }
 
 }
