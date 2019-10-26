@@ -1,12 +1,14 @@
 const fs = require("fs-nextra");
 const path = require("path");
 const util = require("../util/util");
+const EventEmitter = require("events");
 
 const Database = require("./Database");
 
-class Indicium {
+class Indicium extends EventEmitter {
 
     constructor(options = {}) {
+        super();
         if (!util.isObject(options)) throw new TypeError("The Client options must be an object.");
 
         this.path = options.path || path.resolve(process.cwd(), "bwd", options.directory || "data");
@@ -74,7 +76,7 @@ class Indicium {
             const newDatabase = new Database({ database: database, path: this.path });
             this.databases.set(database, newDatabase);
         }
-        console.log(`[DATABASE] ${this.databases.length} Databases loaded.`);
+        console.log(`[DATABASE] ${this.databases.size} Databases loaded.`);
     }
 
     async init() {
